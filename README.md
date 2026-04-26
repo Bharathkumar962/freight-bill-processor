@@ -317,11 +317,3 @@ Submit a reviewer decision to resume the agent.
 - Deploy to GCP Cloud Run + Cloud SQL
 
 ---
-
-## Author
-
-Built as a backend engineering assignment demonstrating:
-- Stateful LLM agent design with human-in-the-loop
-- Graph-based data modelling for complex entity relationships
-- Separation of LLM and deterministic logic in financial systems
-- Production-grade FastAPI patterns with full audit traceability
