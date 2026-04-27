@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Syne',sans-serif;background:var(--color-background-tertiary);color:var(--color-text-primary);min-height:100vh}
+
+  .shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+
+  .sidebar{background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);padding:1.5rem 1rem;display:flex;flex-direction:column;gap:0.5rem}
+  .logo{font-size:15px;font-weight:700;padding:0 0.5rem 1.5rem;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:0.5rem;letter-spacing:-0.3px}
+  .logo span{color:#1D9E75}
+  .nav-item{padding:0.6rem 0.75rem;border-radius:var(--border-radius-md);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.15s;color:var(--color-text-secondary)}
+  .nav-item:hover{background:var(--color-background-secondary)}
+  .nav-item.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:600}
+  .nav-dot{width:7px;height:7px;border-radius:50%}
+
+  .main{padding:2rem;display:flex;flex-direction:column;gap:1.5rem;overflow-y:auto}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between}
+  .page-title{font-size:20px;font-weight:700;letter-spacing:-0.5px}
+  .badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+  .badge-live{background:#EAF3DE;color:#3B6D11}
+
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .metric{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem}
+  .metric-label{font-size:11px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+  .metric-value{font-size:26px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:-1px}
+  .metric-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:4px}
+
+  .panels{display:grid;grid-template-columns:1fr 380px;gap:1.5rem;align-items:start}
+
+  .card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+  .card-header{padding:1rem 1.25rem;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
+  .card-title{font-size:13px;font-weight:600}
+  .card-body{padding:1.25rem}
+
+  .submit-form{display:flex;flex-direction:column;gap:10px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+  .field input{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:7px 10px;font-size:13px;font-family:'DM Mono',monospace;color:var(--color-text-primary);outline:none;width:100%}
+  .field input:focus{border-color:var(--color-border-primary);background:var(--color-background-primary)}
+
+  .btn{padding:8px 16px;border-radius:var(--border-radius-md);font-size:13px;font-weight:600;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);transition:all 0.15s;font-family:'Syne',sans-serif}
+  .btn:hover{background:var(--color-background-tertiary)}
+  .btn-primary{background:#1D9E75;border-color:#0F6E56;color:#fff}
+  .btn-primary:hover{background:#0F6E56}
+  .btn-sm{padding:5px 10px;font-size:11px}
+
+  .scenario-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .pill{font-size:11px;padding:4px 10px;border-radius:20px;cursor:pointer;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-secondary);transition:all 0.15s;font-family:'DM Mono',monospace}
+  .pill:hover{border-color:var(--color-border-primary);color:var(--color-text-primary)}
+  .pill.selected{background:#E1F5EE;border-color:#0F6E56;color:#085041}
+
+  .bills-list{display:flex;flex-direction:column;gap:8px}
+  .bill-row{display:grid;grid-template-columns:110px 1fr 80px 90px 80px;gap:12px;align-items:center;padding:10px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);font-size:12px;background:var(--color-background-primary);cursor:pointer;transition:border-color 0.15s}
+  .bill-row:hover{border-color:var(--color-border-secondary)}
+  .bill-id{font-family:'DM Mono',monospace;font-weight:500;font-size:11px}
+  .bill-carrier{color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bill-amount{font-family:'DM Mono',monospace;text-align:right}
+  .bill-conf{font-family:'DM Mono',monospace;font-size:11px;text-align:right}
+
+  .status{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;text-align:center}
+  .s-approved{background:#EAF3DE;color:#3B6D11}
+  .s-disputed{background:#FCEBEB;color:#A32D2D}
+  .s-flagged{background:#FAEEDA;color:#854F0B}
+  .s-duplicate{background:#F1EFE8;color:#5F5E5A}
+  .s-processing{background:#E6F1FB;color:#185FA5}
+  .s-pending{background:#F1EFE8;color:#888780}
+
+  .detail-kv{display:flex;flex-direction:column;gap:8px}
+  .detail-empty{color:var(--color-text-tertiary);font-size:13px;text-align:center;padding:2rem 0}
+  .kv-row{display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;gap:12px}
+  .kv-key{color:var(--color-text-secondary);flex-shrink:0}
+  .kv-val{font-family:'DM Mono',monospace;text-align:right;word-break:break-all}
+
+  .conf-bar-wrap{margin:4px 0 0}
+  .conf-bar-bg{height:5px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden}
+  .conf-bar-fill{height:100%;border-radius:3px;transition:width 0.4s}
+
+  .section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--color-text-tertiary);margin:12px 0 6px}
+
+  .explanation-box{padding:12px;border-radius:var(--border-radius-md);border-left:3px solid #1D9E75;background:var(--color-background-secondary);font-size:13px;line-height:1.6;color:var(--color-text-primary)}
+
+  .flag-card{padding:10px 12px;border-radius:var(--border-radius-md);border-left:3px solid #BA7517;background:var(--color-background-warning);margin-bottom:6px}
+  .flag-card.flag-error{border-left-color:#E24B4A;background:var(--color-background-danger)}
+  .flag-title{font-size:12px;font-weight:600;color:var(--color-text-primary);margin-bottom:3px}
+  .flag-detail{font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+
+  .review-btns{display:flex;gap:6px}
+  .btn-approve{background:#EAF3DE;border-color:#639922;color:#3B6D11}
+  .btn-approve:hover{background:#C0DD97}
+  .btn-dispute{background:#FCEBEB;border-color:#E24B4A;color:#A32D2D}
+  .btn-dispute:hover{background:#F7C1C1}
+
+  .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:12px 16px;font-size:13px;font-family:'Syne',sans-serif;z-index:999;display:none;max-width:280px}
+  .toast.show{display:block}
+
+  .loader{width:14px;height:14px;border:2px solid var(--color-border-secondary);border-top-color:#1D9E75;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .empty{text-align:center;padding:2rem;color:var(--color-text-tertiary);font-size:13px}
+
+  .queue-item{padding:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-warning);background:var(--color-background-warning);cursor:pointer;margin-bottom:8px}
+  .queue-item-id{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--color-text-warning);margin-bottom:4px}
+  .queue-item-reason{font-size:11px;color:var(--color-text-secondary)}
+
+  .section-divider{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--color-text-tertiary);margin:4px 0 2px}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="sidebar">
+    <div class="logo">Freight<span>OS</span></div>
+    <div class="section-divider">Navigation</div>
+    <div class="nav-item active" onclick="showTab('dashboard')">
+      <div class="nav-dot" style="background:#1D9E75"></div> Dashboard
+    </div>
+    <div class="nav-item" onclick="showTab('submit')">
+      <div class="nav-dot" style="background:#378ADD"></div> Submit Bill
+    </div>
+    <div class="nav-item" onclick="showTab('queue')">
+      <div class="nav-dot" style="background:#BA7517"></div> Review Queue
+      <span id="queue-count-badge" style="margin-left:auto;background:#FAEEDA;color:#854F0B;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;display:none"></span>
+    </div>
+    <div style="margin-top:auto;padding-top:1rem;border-top:0.5px solid var(--color-border-tertiary)">
+      <div style="font-size:11px;color:var(--color-text-tertiary)">API: localhost:8000</div>
+      <div id="api-status" style="font-size:11px;margin-top:4px;color:var(--color-text-tertiary)">checking...</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD TAB -->
+    <div id="tab-dashboard">
+      <div class="topbar">
+        <div class="page-title">Overview</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="badge badge-live">Live</div>
+          <button class="btn btn-sm" onclick="loadDashboard()">Refresh</button>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Total Bills</div>
+          <div class="metric-value" id="m-total">-</div>
+          <div class="metric-sub">ingested</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Approved</div>
+          <div class="metric-value" id="m-approved" style="color:#1D9E75">-</div>
+          <div class="metric-sub">auto-approved</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Disputed</div>
+          <div class="metric-value" id="m-disputed" style="color:#E24B4A">-</div>
+          <div class="metric-sub">flagged issues</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Review Queue</div>
+          <div class="metric-value" id="m-flagged" style="color:#BA7517">-</div>
+          <div class="metric-sub">awaiting human</div>
+        </div>
+      </div>
+
+      <div class="panels">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">All freight bills</div>
+            <button class="btn btn-sm" onclick="loadBills()">Reload</button>
+          </div>
+          <div class="card-body">
+            <div class="bills-list" id="bills-list">
+              <div class="empty"><div class="loader"></div><br>Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">Bill detail</div></div>
+          <div class="card-body">
+            <div id="detail-panel"><div class="detail-empty">Select a bill to inspect</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMIT TAB -->
+    <div id="tab-submit" style="display:none">
+      <div class="topbar" style="margin-bottom:1.5rem">
+        <div class="page-title">Submit freight bill</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Quick load scenario</div></div>
+          <div class="card-body">
+            <div class="scenario-pills" id="scenario-pills"></div>
+            <div id="scenario-desc" style="font-size:12px;color:var(--color-text-secondary);min-height:32px;margin-bottom:12px;padding:8px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);display:none;line-height:1.5"></div>
+            <div class="submit-form">
+              <div class="form-row">
+                <div class="field"><label>Bill ID</label><input id="f-id" placeholder="FB-2025-101"/></div>
+                <div class="field"><label>Bill number</label><input id="f-billnum" placeholder="SFX/2025/00234"/></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Carrier ID</label><input id="f-carid" placeholder="CAR001"/></div>
+                <div class="field"><label>Carrier name</label><input id="f-carname" placeholder="Safexpress Logistics"/></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Bill date</label><input id="f-date" placeholder="2025-02-15"/></div>
+                <div class="field"><label>Lane</label><input id="f-lane" placeholder="DEL-BLR"/></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Shipment ref</label><input id="f-shipref" placeholder="SHP-2025-002"/></div>
+                <div class="field"><label>Weight (kg)</label><input id="f-weight" type="number" placeholder="850"/></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Rate / kg</label><input id="f-rate" type="number" placeholder="15.00"/></div>
+                <div class="field"><label>Base charge</label><input id="f-base" type="number" placeholder="12750"/></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Fuel surcharge</label><input id="f-fuel" type="number" placeholder="1020"/></div>
+                <div class="field"><label>GST amount</label><input id="f-gst" type="number" placeholder="2479"/></div>
+              </div>
+              <div class="field"><label>Total amount</label><input id="f-total" type="number" placeholder="16249"/></div>
+              <button class="btn btn-primary" onclick="submitBill()" id="submit-btn">Submit bill</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">Submission result</div></div>
+          <div class="card-body">
+            <div id="submit-result"><div class="detail-empty">Submit a bill to see the agent decision</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEW QUEUE TAB -->
+    <div id="tab-queue" style="display:none">
+      <div class="topbar" style="margin-bottom:1.5rem">
+        <div class="page-title">Review queue</div>
+        <button class="btn btn-sm" onclick="loadQueue()">Refresh</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Pending human review</div></div>
+          <div class="card-body">
+            <div id="queue-list"><div class="empty"><div class="loader"></div><br>Loading...</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Submit decision</div></div>
+          <div class="card-body">
+            <div id="review-panel"><div class="detail-empty">Select a queued bill to review</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:8000';
+let allBills = [];
+let selectedQueueId = null;
+
+const SCENARIOS = [
+  {id:'FB-2025-101',label:'101 Clean',_scenario:'Clean match — all checks should pass and the bill auto-approves at 100% confidence.',carrier_id:'CAR001',carrier_name:'Safexpress Logistics',bill_number:'SFX/2025/00234',bill_date:'2025-02-15',shipment_reference:'SHP-2025-002',lane:'DEL-BLR',billed_weight_kg:850,rate_per_kg:15.00,base_charge:12750.00,fuel_surcharge:1020.00,gst_amount:2479.00,total_amount:16249.00},
+  {id:'FB-2025-102',label:'102 Ambiguous',_scenario:'Ambiguous — 3 overlapping contracts cover the DEL-BOM lane, and no shipment reference is provided. The agent picks the newest but flags the overlap.',carrier_id:'CAR001',carrier_name:'Safexpress Logistics',bill_number:'SFX/2025/00251',bill_date:'2025-04-10',shipment_reference:null,lane:'DEL-BOM',billed_weight_kg:600,rate_per_kg:13.20,base_charge:7920.00,fuel_surcharge:712.80,gst_amount:1553.90,total_amount:10186.70},
+  {id:'FB-2025-103',label:'103 Partial',_scenario:'Partial delivery — this is the second truck for shipment SHP-2025-001 (2000kg total). First truck delivered 1200kg, this bill covers the remaining 800kg.',carrier_id:'CAR001',carrier_name:'Safexpress Logistics',bill_number:'SFX/2025/00245',bill_date:'2025-02-25',shipment_reference:'SHP-2025-001',lane:'DEL-BOM',billed_weight_kg:800,rate_per_kg:12.50,base_charge:10000.00,fuel_surcharge:800.00,gst_amount:1944.00,total_amount:12744.00},
+  {id:'FB-2025-104',label:'104 Over-billing',_scenario:'Over-billing — carrier claims 1500kg but the BOL only confirms 1200kg was delivered on the first truck. With 800kg already billed separately, total would exceed the 2000kg shipment.',carrier_id:'CAR001',carrier_name:'Safexpress Logistics',bill_number:'SFX/2025/00267',bill_date:'2025-03-15',shipment_reference:'SHP-2025-001',lane:'DEL-BOM',billed_weight_kg:1500,rate_per_kg:12.50,base_charge:18750.00,fuel_surcharge:1500.00,gst_amount:3645.00,total_amount:23895.00},
+  {id:'FB-2025-105',label:'105 Rate drift',_scenario:'Rate drift — billed at Rs 8.70/kg but the contract specifies Rs 8.00/kg. That is 8.75% above the contracted rate, exceeding the 5% tolerance.',carrier_id:'CAR002',carrier_name:'Delhivery Freight',bill_number:'DEL/25-26/1089',bill_date:'2025-01-25',shipment_reference:'SHP-2025-004',lane:'BLR-CHN',billed_weight_kg:1200,rate_per_kg:8.70,base_charge:10440.00,fuel_surcharge:730.80,gst_amount:2010.74,total_amount:13181.54},
+  {id:'FB-2025-106',label:'106 Expired',_scenario:'Expired contract — the bill date (March 2025) falls well after the only contract with TCI Express expired (June 2024). A newer contract exists but with different pricing.',carrier_id:'CAR003',carrier_name:'TCI Express',bill_number:'TCI/2025/00047',bill_date:'2025-03-20',shipment_reference:null,lane:'BOM-AHM',billed_weight_kg:4500,rate_per_kg:7.50,base_charge:33750.00,fuel_surcharge:2025.00,gst_amount:6439.50,total_amount:42214.50},
+  {id:'FB-2025-107',label:'107 FTL UoM',_scenario:'Unit of measure mismatch — the contract is per full truckload (Rs 48,000 flat). This bill uses the alternate per-kg rate (Rs 6.50/kg x 7800kg). Both are valid per the contract.',carrier_id:'CAR003',carrier_name:'TCI Express',bill_number:'TCI/2025/00052',bill_date:'2025-03-01',shipment_reference:'SHP-2025-005',lane:'BOM-AHM',billed_weight_kg:7800,rate_per_kg:6.50,base_charge:50700.00,fuel_surcharge:3042.00,gst_amount:9673.56,total_amount:63415.56},
+  {id:'FB-2025-108',label:'108 Revised FSC',_scenario:'Contract revision — the fuel surcharge was revised from 12% to 18% on Oct 1 2024. This bill dated Nov 2024 correctly uses 18%. The agent must handle mid-term revisions.',carrier_id:'CAR004',carrier_name:'Blue Dart Aviation',bill_number:'BDA/24-25/4567',bill_date:'2024-11-20',shipment_reference:'SHP-2025-006',lane:'DEL-BOM-AIR',billed_weight_kg:250,rate_per_kg:85.00,base_charge:21250.00,fuel_surcharge:3825.00,gst_amount:4513.50,total_amount:29588.50},
+  {id:'FB-2025-109',label:'109 Duplicate',_scenario:'Duplicate bill — this has the exact same bill number (SFX/2025/00234) as FB-2025-101 which was already processed. The agent rejects it instantly.',carrier_id:'CAR001',carrier_name:'Safexpress Logistics',bill_number:'SFX/2025/00234',bill_date:'2025-02-15',shipment_reference:'SHP-2025-002',lane:'DEL-BLR',billed_weight_kg:850,rate_per_kg:15.00,base_charge:12750.00,fuel_surcharge:1020.00,gst_amount:2479.00,total_amount:16249.00},
+  {id:'FB-2025-110',label:'110 Unknown',_scenario:'Unknown carrier — Gati KWE Logistics has no carrier record and no contract in the system. This was an emergency spot carrier. The agent escalates to human review.',carrier_id:null,carrier_name:'Gati KWE Logistics',bill_number:'GAT/2025/00089',bill_date:'2025-03-25',shipment_reference:null,lane:'CHN-DEL',billed_weight_kg:350,rate_per_kg:22.00,base_charge:7700.00,fuel_surcharge:924.00,gst_amount:1552.32,total_amount:10176.32},
+];
+
+function showTab(t){
+  ['dashboard','submit','queue'].forEach(id=>{
+    document.getElementById('tab-'+id).style.display = id===t?'':'none';
+  });
+  document.querySelectorAll('.nav-item').forEach((el,i)=>{
+    el.classList.toggle('active',['dashboard','submit','queue'][i]===t);
+  });
+  if(t==='dashboard') loadDashboard();
+  if(t==='queue') loadQueue();
+}
+
+function toast(msg,color){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.borderLeftColor=color||'var(--color-border-secondary)';
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+async function checkApi(){
+  try{
+    const r=await fetch(API+'/health');
+    if(r.ok){
+      document.getElementById('api-status').textContent='connected';
+      document.getElementById('api-status').style.color='#1D9E75';
+    }
+  }catch{
+    document.getElementById('api-status').textContent='offline';
+    document.getElementById('api-status').style.color='#E24B4A';
+  }
+}
+
+function statusClass(s){
+  return{approved:'s-approved',disputed:'s-disputed',flagged:'s-flagged',duplicate:'s-duplicate',processing:'s-processing',pending:'s-pending'}[s]||'s-pending';
+}
+
+function confColor(conf){
+  return conf>=80?'#1D9E75':conf>=60?'#BA7517':'#E24B4A';
+}
+
+// ── Human-readable flag renderer ──────────────────────────────────────────────
+
+function humaniseFlag(flag){
+  try{
+    const checkName = flag.split(':')[0].trim();
+    const labels = {
+      rate:               'Rate mismatch',
+      weight:             'Weight overcharge',
+      cumulative_weight:  'Total billed weight exceeds shipment',
+      fuel_surcharge:     'Fuel surcharge incorrect',
+      contract_active:    'No active contract found',
+      carrier_known:      'Carrier not recognised',
+      duplicate:          'Duplicate bill',
+      contract_overlap:   'Multiple contracts matched',
+      ftl_billing:        'FTL billing error',
+    };
+    const label = labels[checkName] || checkName.replace(/_/g,' ');
+    const isError = ['duplicate','carrier_known','contract_active','weight','cumulative_weight'].includes(checkName);
+
+    let detail = '';
+
+    if(flag.includes('billed_rate')){
+      const billed = flag.match(/billed_rate['" :]+([0-9.]+)/)?.[1];
+      const contracted = flag.match(/contracted_rate['" :]+([0-9.]+)/)?.[1];
+      const deviation = flag.match(/deviation_pct['" :]+([0-9.]+)/)?.[1];
+      detail = `Carrier billed Rs ${billed}/kg but the contract specifies Rs ${contracted}/kg. That is ${deviation}% above the contracted rate, which exceeds the allowed 5% tolerance.`;
+    } else if(flag.includes('overcharge_kg') && flag.includes('bol_kg')){
+      const over = flag.match(/overcharge_kg['" :]+([0-9.]+)/)?.[1];
+      const billed = flag.match(/billed_kg['" :]+([0-9.]+)/)?.[1];
+      const bol = flag.match(/bol_kg['" :]+([0-9.]+)/)?.[1];
+      detail = `The carrier billed for ${billed} kg but the Bill of Lading only confirms ${bol} kg was actually delivered. This is an overcharge of ${over} kg.`;
+    } else if(flag.includes('total_billed_kg')){
+      const total = flag.match(/total_billed_kg['" :]+([0-9.]+)/)?.[1];
+      const shipment = flag.match(/shipment_weight_kg['" :]+([0-9.]+)/)?.[1];
+      const over = flag.match(/overcharge_kg['" :]+([0-9.]+)/)?.[1];
+      const prev = flag.match(/previously_billed_kg['" :]+([0-9.]+)/)?.[1];
+      detail = `The shipment was for ${shipment} kg total. Previously billed: ${prev} kg. This bill adds another ${parseFloat(total)-parseFloat(prev||0)} kg, bringing the total to ${total} kg — exceeding the shipment by ${over} kg.`;
+    } else if(flag.includes('existing_id')){
+      const existing = flag.match(/existing_id['" :]+([A-Z0-9-]+)/)?.[1];
+      detail = `This bill number was already submitted and processed${existing?' as '+existing:''}. Resubmitting the same invoice is not allowed.`;
+    } else if(flag.includes('contract_count')){
+      const count = flag.match(/contract_count['" :]+([0-9]+)/)?.[1];
+      detail = `${count} overlapping contracts were found for this carrier and lane on the bill date. It is ambiguous which rate applies. The newest contract was selected but the overlap is flagged for review.`;
+    } else if(flag.includes('deviation') && flag.includes('billed_surcharge')){
+      const dev = flag.match(/deviation['" :]+([0-9.]+)/)?.[1];
+      const expected = flag.match(/expected_surcharge['" :]+([0-9.]+)/)?.[1];
+      const billed = flag.match(/billed_surcharge['" :]+([0-9.]+)/)?.[1];
+      const pct = flag.match(/fsc_pct_used['" :]+([0-9.]+)/)?.[1];
+      detail = `Fuel surcharge billed was Rs ${billed} but based on the contract rate of ${pct}%, the expected amount is Rs ${expected}. Difference: Rs ${dev}.`;
+    } else if(flag.includes('resolved_id')){
+      detail = `The carrier name on this bill does not match any registered carrier in our system. Without a valid carrier record, no contract can be matched and the bill cannot be auto-processed.`;
+    } else if(flag.includes('chosen_contract')){
+      detail = `No active contract was found for this carrier covering this lane on the bill date. The contract may have expired or this lane may not be covered.`;
+    }
+
+    return `<div class="flag-card${isError?' flag-error':''}">
+      <div class="flag-title">${label}</div>
+      ${detail?`<div class="flag-detail">${detail}</div>`:''}
+    </div>`;
+  }catch{
+    return `<div class="flag-card"><div class="flag-detail">${flag}</div></div>`;
+  }
+}
+
+function renderDecision(b, container){
+  const conf = b.confidence_score!=null ? Math.round(b.confidence_score*100) : null;
+  const color = conf!=null ? confColor(conf) : '#888';
+
+  let html = `<div class="detail-kv">
+    <div class="kv-row"><span class="kv-key">Decision</span><span class="kv-val"><span class="status ${statusClass(b.status)}">${b.status}</span></span></div>
+    ${conf!=null?`
+      <div>
+        <div class="kv-row"><span class="kv-key">Confidence</span><span class="kv-val" style="color:${color};font-weight:600">${conf}%</span></div>
+        <div class="conf-bar-wrap"><div class="conf-bar-bg"><div class="conf-bar-fill" style="width:${conf}%;background:${color}"></div></div></div>
+      </div>`:''}
+    ${b.matched_contract_id?`<div class="kv-row"><span class="kv-key">Contract matched</span><span class="kv-val">${b.matched_contract_id}</span></div>`:''}
+    ${b.matched_shipment_id?`<div class="kv-row"><span class="kv-key">Shipment matched</span><span class="kv-val">${b.matched_shipment_id}</span></div>`:''}
+    ${b.matched_bol_id?`<div class="kv-row"><span class="kv-key">BOL matched</span><span class="kv-val">${b.matched_bol_id}</span></div>`:''}
+  </div>`;
+
+  if(b.decision_reason){
+    const cleanReason = b.decision_reason
+      .replace(/\{[^}]+\}/g,'')
+      .replace(/FAILED\s*-/g,'failed:')
+      .replace(/_/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+    html += `<div class="section-label">Agent explanation</div>
+    <div class="explanation-box" style="border-left-color:${color}">${cleanReason}</div>`;
+  }
+
+  if(b.flags && b.flags.length){
+    html += `<div class="section-label">What the agent found</div>`;
+    html += b.flags.map(f=>humaniseFlag(f)).join('');
+  }
+
+  if(b.status==='flagged'){
+    html += `<button class="btn" style="margin-top:8px;width:100%" onclick="showTab('queue')">Go to review queue</button>`;
+  }
+
+  container.innerHTML = html;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+async function loadBills(){
+  const counts={total:0,approved:0,disputed:0,flagged:0};
+  const bills=[];
+  for(const s of SCENARIOS){
+    try{
+      const r=await fetch(API+'/freight-bills/'+s.id);
+      if(r.ok){
+        const b=await r.json();
+        bills.push(b);
+        counts.total++;
+        if(b.status==='approved') counts.approved++;
+        else if(b.status==='disputed') counts.disputed++;
+        else if(b.status==='flagged') counts.flagged++;
+      }
+    }catch{}
+  }
+  allBills=bills;
+  renderBills(bills);
+  document.getElementById('m-total').textContent=counts.total||'0';
+  document.getElementById('m-approved').textContent=counts.approved||'0';
+  document.getElementById('m-disputed').textContent=counts.disputed||'0';
+  document.getElementById('m-flagged').textContent=counts.flagged||'0';
+  const badge=document.getElementById('queue-count-badge');
+  if(counts.flagged>0){badge.textContent=counts.flagged;badge.style.display='';}
+  else badge.style.display='none';
+}
+
+function renderBills(bills){
+  const el=document.getElementById('bills-list');
+  if(!bills.length){el.innerHTML='<div class="empty">No bills found. Submit some bills first.</div>';return;}
+  el.innerHTML=bills.map(b=>`
+    <div class="bill-row" onclick="showDetail('${b.id}')" id="row-${b.id}">
+      <div class="bill-id">${b.id}</div>
+      <div class="bill-carrier">${b.carrier_name}</div>
+      <div><span class="status ${statusClass(b.status)}">${b.status}</span></div>
+      <div class="bill-conf">${b.confidence_score!=null?Math.round(b.confidence_score*100)+'%':'--'}</div>
+      <div class="bill-amount">Rs ${Number(b.total_amount).toLocaleString('en-IN')}</div>
+    </div>
+  `).join('');
+}
+
+async function showDetail(id){
+  document.querySelectorAll('.bill-row').forEach(r=>r.style.background='');
+  const row=document.getElementById('row-'+id);
+  if(row) row.style.background='var(--color-background-secondary)';
+  const panel=document.getElementById('detail-panel');
+  panel.innerHTML='<div style="text-align:center;padding:1rem"><div class="loader"></div></div>';
+  try{
+    const r=await fetch(API+'/freight-bills/'+id);
+    const b=await r.json();
+    renderDecision(b, panel);
+  }catch{
+    panel.innerHTML='<div class="detail-empty">Could not load bill</div>';
+  }
+}
+
+function loadDashboard(){
+  document.getElementById('m-total').textContent='-';
+  document.getElementById('m-approved').textContent='-';
+  document.getElementById('m-disputed').textContent='-';
+  document.getElementById('m-flagged').textContent='-';
+  document.getElementById('bills-list').innerHTML='<div class="empty"><div class="loader"></div><br>Loading...</div>';
+  loadBills();
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+
+function buildScenarioPills(){
+  const wrap=document.getElementById('scenario-pills');
+  wrap.innerHTML=SCENARIOS.map(s=>`<div class="pill" onclick="loadScenario('${s.id}')">${s.label}</div>`).join('');
+}
+
+function loadScenario(id){
+  const s=SCENARIOS.find(x=>x.id===id);
+  if(!s) return;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('selected',p.textContent===s.label));
+  const desc=document.getElementById('scenario-desc');
+  desc.textContent=s._scenario;
+  desc.style.display='block';
+  document.getElementById('f-id').value=s.id;
+  document.getElementById('f-billnum').value=s.bill_number;
+  document.getElementById('f-carid').value=s.carrier_id||'';
+  document.getElementById('f-carname').value=s.carrier_name;
+  document.getElementById('f-date').value=s.bill_date;
+  document.getElementById('f-lane').value=s.lane;
+  document.getElementById('f-shipref').value=s.shipment_reference||'';
+  document.getElementById('f-weight').value=s.billed_weight_kg;
+  document.getElementById('f-rate').value=s.rate_per_kg;
+  document.getElementById('f-base').value=s.base_charge;
+  document.getElementById('f-fuel').value=s.fuel_surcharge;
+  document.getElementById('f-gst').value=s.gst_amount;
+  document.getElementById('f-total').value=s.total_amount;
+}
+
+async function submitBill(){
+  const btn=document.getElementById('submit-btn');
+  btn.textContent='Submitting...';
+  btn.disabled=true;
+  const payload={
+    id:document.getElementById('f-id').value,
+    bill_number:document.getElementById('f-billnum').value,
+    carrier_id:document.getElementById('f-carid').value||null,
+    carrier_name:document.getElementById('f-carname').value,
+    bill_date:document.getElementById('f-date').value,
+    lane:document.getElementById('f-lane').value,
+    shipment_reference:document.getElementById('f-shipref').value||null,
+    billed_weight_kg:parseFloat(document.getElementById('f-weight').value),
+    rate_per_kg:parseFloat(document.getElementById('f-rate').value),
+    base_charge:parseFloat(document.getElementById('f-base').value),
+    fuel_surcharge:parseFloat(document.getElementById('f-fuel').value),
+    gst_amount:parseFloat(document.getElementById('f-gst').value),
+    total_amount:parseFloat(document.getElementById('f-total').value),
+  };
+  const result=document.getElementById('submit-result');
+  result.innerHTML='<div style="text-align:center;padding:1rem"><div class="loader"></div><br><span style="font-size:12px;color:var(--color-text-secondary)">Submitting to agent...</span></div>';
+  try{
+    const r=await fetch(API+'/freight-bills',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok) throw new Error('API error');
+    toast('Bill submitted — agent processing','#1D9E75');
+    result.innerHTML='<div style="text-align:center;padding:1rem"><div class="loader"></div><br><span style="font-size:12px;color:var(--color-text-secondary)">Agent is processing — checking in 4 seconds...</span></div>';
+    setTimeout(async()=>{
+      try{
+        const r2=await fetch(API+'/freight-bills/'+payload.id);
+        const b=await r2.json();
+        renderDecision(b,result);
+      }catch{
+        result.innerHTML='<div class="detail-empty">Could not fetch result — try checking the dashboard.</div>';
+      }
+    },4000);
+  }catch{
+    result.innerHTML='<div style="color:var(--color-text-danger);font-size:13px;padding:8px">Error connecting to API. Is Docker running?</div>';
+    toast('API error','#E24B4A');
+  }
+  btn.textContent='Submit bill';
+  btn.disabled=false;
+}
+
+// ── Review queue ──────────────────────────────────────────────────────────────
+
+async function loadQueue(){
+  const el=document.getElementById('queue-list');
+  el.innerHTML='<div class="empty"><div class="loader"></div><br>Loading...</div>';
+  try{
+    const r=await fetch(API+'/review-queue');
+    const items=await r.json();
+    if(!items.length){el.innerHTML='<div class="empty">No bills pending review</div>';return;}
+    el.innerHTML=items.map(q=>`
+      <div class="queue-item" onclick="showReviewPanel('${q.bill_id}',${JSON.stringify((q.reason||'').replace(/"/g,"'"))},${q.confidence||0})">
+        <div class="queue-item-id">${q.bill_id}</div>
+        <div class="queue-item-reason">${q.reason||'Low confidence score'}</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary);margin-top:4px">Confidence: ${q.confidence!=null?Math.round(q.confidence*100)+'%':'--'}</div>
+      </div>
+    `).join('');
+  }catch{
+    el.innerHTML='<div class="empty">Could not load queue</div>';
+  }
+}
+
+function showReviewPanel(billId, reason, conf){
+  selectedQueueId=billId;
+  const color=confColor(conf*100);
+  document.getElementById('review-panel').innerHTML=`
+    <div class="detail-kv" style="margin-bottom:1rem">
+      <div class="kv-row"><span class="kv-key">Bill</span><span class="kv-val">${billId}</span></div>
+      <div class="kv-row"><span class="kv-key">Confidence</span><span class="kv-val" style="color:${color};font-weight:600">${Math.round(conf*100)}%</span></div>
+    </div>
+    <div class="section-label">Reason for review</div>
+    <div style="font-size:13px;line-height:1.6;background:var(--color-background-secondary);padding:10px;border-radius:var(--border-radius-md);margin-bottom:1rem">${reason}</div>
+    <div class="field" style="margin-bottom:10px"><label>Reviewer notes (optional)</label><input id="review-notes" placeholder="Add notes for the audit trail..."/></div>
+    <div class="review-btns">
+      <button class="btn btn-approve" onclick="submitReview('approve')" style="flex:1">Approve</button>
+      <button class="btn btn-dispute" onclick="submitReview('dispute')" style="flex:1">Dispute</button>
+    </div>
+  `;
+}
+
+async function submitReview(decision){
+  if(!selectedQueueId) return;
+  const notes=document.getElementById('review-notes')?.value||'';
+  try{
+    const r=await fetch(API+'/review/'+selectedQueueId,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision,notes})});
+    if(r.ok){
+      toast('Decision submitted: '+decision,'#1D9E75');
+      document.getElementById('review-panel').innerHTML='<div class="detail-empty">Decision submitted. Agent is finalising.</div>';
+      setTimeout(loadQueue,2000);
+    }
+  }catch{
+    toast('Error submitting review','#E24B4A');
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+checkApi();
+buildScenarioPills();
+loadDashboard();
+</script>
+</body>
+</html>
